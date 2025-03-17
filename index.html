@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MEHEN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Global Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background-color: #7ec850;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    /* Logo in the bottom right */
+    #logo {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 80px;
+      z-index: 1000;
+    }
+    /* Header Titles */
+    .header-title {
+      margin-top: 50px;
+      text-align: center;
+    }
+    .header-title h2 {
+      font-size: 1.8em;
+      color: #fff;
+      text-shadow: 2px 2px 4px #000;
+    }
+    .header-title h1 {
+      font-size: 2.5em;
+      color: #fff;
+      text-shadow: 2px 2px 4px #000;
+      margin-bottom: 20px;
+    }
+    /* Turn Indicator */
+    #turnIndicator {
+      font-size: 24px;
+      color: #fff;
+      text-shadow: 1px 1px 3px #000;
+      margin: 20px 0;
+    }
+    /* Game Container */
+    #gameContainer {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      background: #fff;
+      border: 2px solid #555;
+      margin-bottom: 10px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    /* Controls */
+    #controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #ffcc00;
+      color: #333;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+    /* Overlay Screens */
+    .overlayScreen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 10;
+    }
+    .overlayScreen.active {
+      display: flex;
+    }
+    /* Warning Message (centered over game) */
+    #warningMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.8);
+      padding: 20px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      font-size: 20px;
+      color: #333;
+      display: none;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+  <!-- Logo -->
+  <img src="logo.png" alt="Logo" id="logo">
+  <!-- Header Titles -->
+  <div class="header-title">
+    <h2>Another Product Invented</h2>
+    <h1>MEHEN</h1>
+  </div>
+  <!-- Turn Indicator -->
+  <div id="turnIndicator"></div>
+  <!-- Game Container -->
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <div id="warningMessage"></div>
+    <!-- Overlay Screens -->
+    <div id="menuScreen" class="overlayScreen active">
+      <h2>Menu</h2>
+      <button id="newGameBtn">New Game</button>
+      <button id="instructionsBtn">Instructions</button>
+    </div>
+    <div id="instructionsScreen" class="overlayScreen">
+      <h2>Instructions</h2>
+      <p>Roll the dice to move your piece along the spiral track.</p>
+      <p>First to reach the end wins.</p>
+      <p>Difficulty affects the AI's performance.</p>
+      <p>Press [M] to return to the menu.</p>
+      <button id="backToMenuFromInstrBtn">Back to Menu</button>
+    </div>
+    <div id="difficultyScreen" class="overlayScreen">
+      <h2>Select Difficulty</h2>
+      <button id="easyBtn">Easy</button>
+      <button id="mediumBtn">Medium</button>
+      <button id="hardBtn">Hard</button>
+    </div>
+  </div>
+  <!-- Controls -->
+  <div id="controls">
+    <button id="rollDiceBtn">Roll Dice</button>
+  </div>
+  <div id="messageArea"></div>
+
+  <script>
+    'use strict';
+    console.log("[DEBUG] MEHEN game started");
+    
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+    
+    // Game variables
+    let path = [];
+    let totalSteps = 25; // number of positions on the spiral track
+    let humanPos = 0;
+    let aiPos = 0;
+    let turn = "human"; // "human", "ai", or "gameover"
+    let difficulty = "medium";
+    
+    // DOM elements
+    const turnIndicator = document.getElementById("turnIndicator");
+    const warningMessage = document.getElementById("warningMessage");
+    const menuScreen = document.getElementById("menuScreen");
+    const instructionsScreen = document.getElementById("instructionsScreen");
+    const difficultyScreen = document.getElementById("difficultyScreen");
+    const newGameBtn = document.getElementById("newGameBtn");
+    const instructionsBtn = document.getElementById("instructionsBtn");
+    const backToMenuFromInstrBtn = document.getElementById("backToMenuFromInstrBtn");
+    const easyBtn = document.getElementById("easyBtn");
+    const mediumBtn = document.getElementById("mediumBtn");
+    const hardBtn = document.getElementById("hardBtn");
+    const rollDiceBtn = document.getElementById("rollDiceBtn");
+    const messageArea = document.getElementById("messageArea");
+    
+    // Update turn indicator text
+    function updateTurnIndicator() {
+      if (turn === "human") {
+        turnIndicator.textContent = "Your turn";
+      } else if (turn === "ai") {
+        turnIndicator.textContent = "AI's turn";
+      } else {
+        turnIndicator.textContent = "";
+      }
+    }
+    
+    // Show a warning message in the center of the game area
+    function showWarning(msg) {
+      warningMessage.textContent = msg;
+      warningMessage.style.display = "block";
+      setTimeout(() => { warningMessage.style.display = "none"; }, 2000);
+    }
+    
+    // Generate a spiral path (an array of {x, y} positions)
+    function generateSpiralPath(steps, centerX, centerY, maxRadius) {
+      let path = [];
+      for (let i = 0; i < steps; i++) {
+        let angle = i * (Math.PI / 4); // adjust for spiral effect
+        let radius = (maxRadius / steps) * i;
+        let x = centerX + radius * Math.cos(angle);
+        let y = centerY + radius * Math.sin(angle);
+        path.push({ x: x, y: y });
+      }
+      return path;
+    }
+    
+    // Draw the board: the spiral track and the players' pieces
+    function drawBoard() {
+      ctx.clearRect(0, 0, W, H);
+      // Draw spiral track positions
+      for (let i = 0; i < path.length; i++) {
+        let pos = path[i];
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 15, 0, Math.PI * 2);
+        ctx.fillStyle = "#ddd";
+        ctx.fill();
+        ctx.strokeStyle = "#888";
+        ctx.stroke();
+      }
+      // Draw human piece (blue)
+      let humanPosCoords = path[humanPos];
+      ctx.beginPath();
+      ctx.arc(humanPosCoords.x, humanPosCoords.y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = "#00f";
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.stroke();
+      // Draw AI piece (red)
+      let aiPosCoords = path[aiPos];
+      ctx.beginPath();
+      ctx.arc(aiPosCoords.x, aiPosCoords.y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = "#f00";
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.stroke();
+    }
+    
+    // Check if the game is over (if either piece reaches the end)
+    function checkGameOver() {
+      if (humanPos >= path.length - 1) {
+        showWarning("Game Over! You win!");
+        turn = "gameover";
+        updateTurnIndicator();
+        return true;
+      }
+      if (aiPos >= path.length - 1) {
+        showWarning("Game Over! AI wins!");
+        turn = "gameover";
+        updateTurnIndicator();
+        return true;
+      }
+      return false;
+    }
+    
+    // Human turn: roll dice and move forward
+    rollDiceBtn.addEventListener("click", function() {
+      if (turn !== "human") return;
+      let dice = Math.floor(Math.random() * 6) + 1;
+      showWarning("You rolled a " + dice);
+      humanPos = Math.min(humanPos + dice, path.length - 1);
+      drawBoard();
+      if (!checkGameOver()) {
+        turn = "ai";
+        updateTurnIndicator();
+        setTimeout(aiMove, 1000);
+      }
+    });
+    
+    // AI move logic – dice roll based on difficulty
+    function aiMove() {
+      if (turn !== "ai") return;
+      let dice;
+      if (difficulty === "easy") {
+        dice = Math.floor(Math.random() * 3) + 1; // easier, lower numbers
+      } else if (difficulty === "medium") {
+        dice = Math.floor(Math.random() * 4) + 1; // moderate range
+      } else { // hard
+        dice = Math.floor(Math.random() * 6) + 1; // full dice
+      }
+      showWarning("AI rolled a " + dice);
+      aiPos = Math.min(aiPos + dice, path.length - 1);
+      drawBoard();
+      if (!checkGameOver()) {
+        turn = "human";
+        updateTurnIndicator();
+      }
+    }
+    
+    // Overlay screen control
+    function showOverlay(screen) {
+      menuScreen.classList.remove("active");
+      instructionsScreen.classList.remove("active");
+      difficultyScreen.classList.remove("active");
+      if (screen) {
+        screen.classList.add("active");
+      }
+    }
+    
+    // New Game button: show difficulty selection overlay
+    newGameBtn.addEventListener("click", function() {
+      showOverlay(difficultyScreen);
+    });
+    
+    // Instructions button
+    instructionsBtn.addEventListener("click", function() {
+      showOverlay(instructionsScreen);
+    });
+    
+    // Back to Menu from Instructions overlay
+    backToMenuFromInstrBtn.addEventListener("click", function() {
+      showOverlay(menuScreen);
+    });
+    
+    // Difficulty selection buttons
+    easyBtn.addEventListener("click", function() {
+      difficulty = "easy";
+      startNewGame();
+    });
+    mediumBtn.addEventListener("click", function() {
+      difficulty = "medium";
+      startNewGame();
+    });
+    hardBtn.addEventListener("click", function() {
+      difficulty = "hard";
+      startNewGame();
+    });
+    
+    // Start a new game: reset positions and generate a new spiral path
+    function startNewGame() {
+      humanPos = 0;
+      aiPos = 0;
+      path = generateSpiralPath(totalSteps, W/2, H/2, 200);
+      turn = "human";
+      updateTurnIndicator();
+      drawBoard();
+      showOverlay(null);
+      showWarning("New game started. Your turn!");
+    }
+    
+    // Listen for key [M] to return to menu
+    document.addEventListener("keydown", function(e) {
+      if (e.key.toLowerCase() === "m") {
+        showOverlay(menuScreen);
+      }
+    });
+    
+    // Initial setup
+    updateTurnIndicator();
+    drawBoard();
+  </script>
+</body>
+</html>
