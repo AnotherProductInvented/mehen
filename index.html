@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <title>MEHEN</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Pirata+One&display=swap" rel="stylesheet">
   <style>
     /* Global Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Comic Sans MS', cursive, sans-serif;
+     body {
+  font-family: 'Pirata One', 'Comic Sans MS', cursive, sans-serif;
       background-color: #7ec850;
       display: flex;
       flex-direction: column;
@@ -47,14 +49,16 @@
       margin: 20px 0;
     }
     /* Game Container */
-    #gameContainer {
-      position: relative;
-      width: 500px;
-      height: 500px;
-      background: #fff;
-      border: 2px solid #555;
-      margin-bottom: 10px;
-    }
+#gameContainer {
+  position: relative;
+  width: 500px;
+  height: 500px;
+  background: url('spiralboard.png') no-repeat center center;
+  background-size: cover;
+  border: 2px solid #555;
+  margin-bottom: 10px;
+}
+
     canvas {
       display: block;
       width: 100%;
@@ -116,6 +120,7 @@
   </style>
 </head>
 <body>
+  
   <!-- Logo -->
   <img src="logo.png" alt="Logo" id="logo">
   <!-- Header Titles -->
@@ -127,6 +132,12 @@
   <div id="turnIndicator"></div>
   <!-- Game Container -->
   <div id="gameContainer">
+    <div id="storyScreen" class="overlayScreen active">
+  <h2>Welcome to MEHEN</h2>
+  <p>The serpent coils... The journey begins.</p>
+  <p>Outrun your rival across the ancient spiral path.</p>
+  <button id="startStoryBtn">Begin</button>
+</div>
     <canvas id="gameCanvas" width="500" height="500"></canvas>
     <div id="warningMessage"></div>
     <!-- Overlay Screens -->
@@ -172,6 +183,14 @@
     let aiPos = 0;
     let turn = "human"; // "human", "ai", or "gameover"
     let difficulty = "medium";
+
+    // Load piece images
+const humanImg = new Image();
+humanImg.src = 'scarab.png'; // your human token image
+
+const aiImg = new Image();
+aiImg.src = 'lion.png'; // your AI token image
+
     
     // DOM elements
     const turnIndicator = document.getElementById("turnIndicator");
@@ -187,6 +206,13 @@
     const hardBtn = document.getElementById("hardBtn");
     const rollDiceBtn = document.getElementById("rollDiceBtn");
     const messageArea = document.getElementById("messageArea");
+    const storyScreen = document.getElementById("storyScreen");
+    const startStoryBtn = document.getElementById("startStoryBtn");
+    startStoryBtn.addEventListener("click", function () {
+  showOverlay(menuScreen);
+});
+
+
     
     // Update turn indicator text
     function updateTurnIndicator() {
@@ -232,23 +258,14 @@
         ctx.strokeStyle = "#888";
         ctx.stroke();
       }
-      // Draw human piece (blue)
-      let humanPosCoords = path[humanPos];
-      ctx.beginPath();
-      ctx.arc(humanPosCoords.x, humanPosCoords.y, 10, 0, Math.PI * 2);
-      ctx.fillStyle = "#00f";
-      ctx.fill();
-      ctx.strokeStyle = "#000";
-      ctx.stroke();
-      // Draw AI piece (red)
-      let aiPosCoords = path[aiPos];
-      ctx.beginPath();
-      ctx.arc(aiPosCoords.x, aiPosCoords.y, 10, 0, Math.PI * 2);
-      ctx.fillStyle = "#f00";
-      ctx.fill();
-      ctx.strokeStyle = "#000";
-      ctx.stroke();
-    }
+// Draw human piece (image)
+let humanPosCoords = path[humanPos];
+ctx.drawImage(humanImg, humanPosCoords.x - 15, humanPosCoords.y - 15, 30, 30);
+
+// Draw AI piece (image)
+let aiPosCoords = path[aiPos];
+ctx.drawImage(aiImg, aiPosCoords.x - 15, aiPosCoords.y - 15, 30, 30);
+
     
     // Check if the game is over (if either piece reaches the end)
     function checkGameOver() {
