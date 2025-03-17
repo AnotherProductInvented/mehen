@@ -265,119 +265,119 @@ ctx.drawImage(humanImg, humanPosCoords.x - 15, humanPosCoords.y - 15, 30, 30);
 // Draw AI piece (image)
 let aiPosCoords = path[aiPos];
 ctx.drawImage(aiImg, aiPosCoords.x - 15, aiPosCoords.y - 15, 30, 30);
+} // ✅ ← This closes the drawBoard() function properly
 
-    
-    // Check if the game is over (if either piece reaches the end)
-    function checkGameOver() {
-      if (humanPos >= path.length - 1) {
-        showWarning("Game Over! You win!");
-        turn = "gameover";
-        updateTurnIndicator();
-        return true;
-      }
-      if (aiPos >= path.length - 1) {
-        showWarning("Game Over! AI wins!");
-        turn = "gameover";
-        updateTurnIndicator();
-        return true;
-      }
-      return false;
-    }
-    
-    // Human turn: roll dice and move forward
-    rollDiceBtn.addEventListener("click", function() {
-      if (turn !== "human") return;
-      let dice = Math.floor(Math.random() * 6) + 1;
-      showWarning("You rolled a " + dice);
-      humanPos = Math.min(humanPos + dice, path.length - 1);
-      drawBoard();
-      if (!checkGameOver()) {
-        turn = "ai";
-        updateTurnIndicator();
-        setTimeout(aiMove, 1000);
-      }
-    });
-    
-    // AI move logic – dice roll based on difficulty
-    function aiMove() {
-      if (turn !== "ai") return;
-      let dice;
-      if (difficulty === "easy") {
-        dice = Math.floor(Math.random() * 3) + 1; // easier, lower numbers
-      } else if (difficulty === "medium") {
-        dice = Math.floor(Math.random() * 4) + 1; // moderate range
-      } else { // hard
-        dice = Math.floor(Math.random() * 6) + 1; // full dice
-      }
-      showWarning("AI rolled a " + dice);
-      aiPos = Math.min(aiPos + dice, path.length - 1);
-      drawBoard();
-      if (!checkGameOver()) {
-        turn = "human";
-        updateTurnIndicator();
-      }
-    }
-    
-    // Overlay screen control
-    function showOverlay(screen) {
-      menuScreen.classList.remove("active");
-      instructionsScreen.classList.remove("active");
-      difficultyScreen.classList.remove("active");
-      if (screen) {
-        screen.classList.add("active");
-      }
-    }
-    
-    // New Game button: show difficulty selection overlay
-    newGameBtn.addEventListener("click", function() {
-      showOverlay(difficultyScreen);
-    });
-    
-    // Instructions button
-    instructionsBtn.addEventListener("click", function() {
-      showOverlay(instructionsScreen);
-    });
-    
-    // Back to Menu from Instructions overlay
-    backToMenuFromInstrBtn.addEventListener("click", function() {
-      showOverlay(menuScreen);
-    });
-    
-    // Difficulty selection buttons
-    easyBtn.addEventListener("click", function() {
-      difficulty = "easy";
-      startNewGame();
-    });
-    mediumBtn.addEventListener("click", function() {
-      difficulty = "medium";
-      startNewGame();
-    });
-    hardBtn.addEventListener("click", function() {
-      difficulty = "hard";
-      startNewGame();
-    });
-    
-    // Start a new game: reset positions and generate a new spiral path
-    function startNewGame() {
-      humanPos = 0;
-      aiPos = 0;
-      path = generateSpiralPath(totalSteps, W/2, H/2, 200);
-      turn = "human";
-      updateTurnIndicator();
-      drawBoard();
-      showOverlay(null);
-      showWarning("New game started. Your turn!");
-    }
-    
-    // Listen for key [M] to return to menu
-    document.addEventListener("keydown", function(e) {
-      if (e.key.toLowerCase() === "m") {
-        showOverlay(menuScreen);
-      }
-    });
-    
-    // Initial setup
+// Check if the game is over (if either piece reaches the end)
+function checkGameOver() {
+  if (humanPos >= path.length - 1) {
+    showWarning("Game Over! You win!");
+    turn = "gameover";
     updateTurnIndicator();
+    return true;
+  }
+  if (aiPos >= path.length - 1) {
+    showWarning("Game Over! AI wins!");
+    turn = "gameover";
+    updateTurnIndicator();
+    return true;
+  }
+  return false;
+}
+
+// Human turn: roll dice and move forward
+rollDiceBtn.addEventListener("click", function() {
+  if (turn !== "human") return;
+  let dice = Math.floor(Math.random() * 6) + 1;
+  showWarning("You rolled a " + dice);
+  humanPos = Math.min(humanPos + dice, path.length - 1);
+  drawBoard();
+  if (!checkGameOver()) {
+    turn = "ai";
+    updateTurnIndicator();
+    setTimeout(aiMove, 1000);
+  }
+});
+
+// AI move logic – dice roll based on difficulty
+function aiMove() {
+  if (turn !== "ai") return;
+  let dice;
+  if (difficulty === "easy") {
+    dice = Math.floor(Math.random() * 3) + 1;
+  } else if (difficulty === "medium") {
+    dice = Math.floor(Math.random() * 4) + 1;
+  } else {
+    dice = Math.floor(Math.random() * 6) + 1;
+  }
+  showWarning("AI rolled a " + dice);
+  aiPos = Math.min(aiPos + dice, path.length - 1);
+  drawBoard();
+  if (!checkGameOver()) {
+    turn = "human";
+    updateTurnIndicator();
+  }
+}
+
+// Overlay screen control
+function showOverlay(screen) {
+  menuScreen.classList.remove("active");
+  instructionsScreen.classList.remove("active");
+  difficultyScreen.classList.remove("active");
+  if (screen) {
+    screen.classList.add("active");
+  }
+}
+
+// New Game button
+newGameBtn.addEventListener("click", function() {
+  showOverlay(difficultyScreen);
+});
+
+// Instructions button
+instructionsBtn.addEventListener("click", function() {
+  showOverlay(instructionsScreen);
+});
+
+// Back to Menu from Instructions overlay
+backToMenuFromInstrBtn.addEventListener("click", function() {
+  showOverlay(menuScreen);
+});
+
+// Difficulty buttons
+easyBtn.addEventListener("click", function() {
+  difficulty = "easy";
+  startNewGame();
+});
+mediumBtn.addEventListener("click", function() {
+  difficulty = "medium";
+  startNewGame();
+});
+hardBtn.addEventListener("click", function() {
+  difficulty = "hard";
+  startNewGame();
+});
+
+// Start a new game
+function startNewGame() {
+  humanPos = 0;
+  aiPos = 0;
+  path = generateSpiralPath(totalSteps, W/2, H/2, 200);
+  turn = "human";
+  updateTurnIndicator();
+  drawBoard();
+  showOverlay(null);
+  showWarning("New game started. Your turn!");
+}
+
+// Listen for key [M] to return to menu
+document.addEventListener("keydown", function(e) {
+  if (e.key.toLowerCase() === "m") {
+    showOverlay(menuScreen);
+  }
+});
+
+// Initial setup
+updateTurnIndicator();
   </script>
 </body>
 </html>
